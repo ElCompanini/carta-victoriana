@@ -10,7 +10,6 @@
 }
 
 * { box-sizing: border-box; }
-
 html, body { margin: 0; padding: 0; min-height: 100%; }
 
 body {
@@ -26,7 +25,6 @@ body {
 
 /* ---------- Encabezado ---------- */
 .topbar { text-align: center; margin-bottom: 18px; }
-
 .title {
   font-family: "Playfair Display", serif;
   font-weight: 700;
@@ -36,7 +34,6 @@ body {
   letter-spacing: 1px;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
-
 .subtitle { margin: 6px 0 0; font-style: italic; opacity: 0.8; font-size: 1.05rem; }
 
 /* ---------- Escenario ---------- */
@@ -53,99 +50,75 @@ body {
   user-select: none;
   outline: none;
 }
-
 .stage:focus-visible { outline: 2px dashed var(--gold); outline-offset: 8px; }
 
-/* La "carta" cuadrada (puzzle purse). Es pequeña para que las solapas
-   desplegadas quepan alrededor sin salirse del escenario. */
+/* La carta cuadrada. Pequeña para que las solapas desplegadas quepan. */
 .purse {
   position: relative;
-  width: 46%;
+  width: 50%;
   aspect-ratio: 1 / 1;
   transform-style: preserve-3d;
   transition: transform 0.9s cubic-bezier(0.6, 0.05, 0.25, 1);
 }
 
-/* Dibujo interior (se revela al abrir las solapas) */
+/* Base = panel central cuando la carta está CERRADA (cuadrado pequeño). */
 .base {
   position: absolute;
   inset: 0;
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--parchment);
+  clip-path: polygon(25% 25%, 75% 25%, 75% 75%, 25% 75%);
   backface-visibility: hidden;
-  box-shadow: inset 0 0 0 2px rgba(201, 162, 75, 0.6);
   z-index: 1;
 }
 
-.base img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Dibujo central ABIERTO (sorpresa) que se revela al desplegar la estrella.
+   Ocupa el mismo cuadrado central y aparece cuando las solapas interiores
+   están abiertas. */
+.centro {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(25% 25%, 75% 25%, 75% 75%, 25% 75%);
+  backface-visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  z-index: 3;
+}
 
-/* Cada solapa triangular */
+.base img, .centro img, .flap img, .purse-back img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+
+/* Solapas: cada una es un triángulo recortado (clip-path en línea desde JS).
+   Cerrada = doblada al centro (oculta por backface) → se ve la base.
+   Abierta = plana en su sitio mostrando el dibujo. */
 .flap {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
-  transition: transform 0.75s cubic-bezier(0.34, 1.2, 0.64, 1);
-  z-index: 5;
+  backface-visibility: hidden;
+  transition: transform 0.8s cubic-bezier(0.34, 1.15, 0.64, 1);
   cursor: pointer;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.3));
 }
-
-/* Recorte de cada solapa en triángulo (apex en el centro) */
-.flap.n { clip-path: polygon(0 0, 100% 0, 50% 50%); transform-origin: 50% 0%; }
-.flap.e { clip-path: polygon(100% 0, 100% 100%, 50% 50%); transform-origin: 100% 50%; }
-.flap.s { clip-path: polygon(0 100%, 100% 100%, 50% 50%); transform-origin: 50% 100%; }
-.flap.w { clip-path: polygon(0 0, 0 100%, 50% 50%); transform-origin: 0% 50%; }
-
-/* Solapa desplegada: gira 180° sobre su borde exterior y queda hacia afuera */
-.flap.n.open { transform: rotateX(180deg); }
-.flap.s.open { transform: rotateX(-180deg); }
-.flap.e.open { transform: rotateY(-180deg); }
-.flap.w.open { transform: rotateY(180deg); }
-
-/* Caras de la solapa */
-.flap-face { position: absolute; inset: 0; backface-visibility: hidden; }
-.flap-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-/* Cara frontal = dibujo de la portada (visible cuando está cerrada) */
-.flap-face.front {
-  background: var(--parchment);
-  box-shadow: inset 0 0 0 2px rgba(201, 162, 75, 0.55);
-}
-
-/* Cara trasera = papel (visible cuando la solapa está desplegada) */
-.flap-face.back {
-  background:
-    repeating-linear-gradient(45deg, rgba(0,0,0,0.03) 0 6px, transparent 6px 12px),
-    var(--parchment-dark);
-  box-shadow: inset 0 0 0 2px rgba(122, 92, 46, 0.4);
-}
-.flap.n .flap-face.back, .flap.s .flap-face.back { transform: rotateX(180deg); }
-.flap.e .flap-face.back, .flap.w .flap-face.back { transform: rotateY(180deg); }
+.flap.capa-out { z-index: 4; }
+.flap.capa-in  { z-index: 8; }
+.flap:not(.open) { pointer-events: none; } /* solo se puede clicar una solapa abierta (para cerrarla) */
 
 /* Reverso de toda la carta (al dar vuelta) */
 .purse-back {
   position: absolute;
   inset: 0;
-  border-radius: 4px;
-  overflow: hidden;
   transform: rotateY(180deg);
   backface-visibility: hidden;
-  box-shadow: 0 14px 30px var(--shadow), inset 0 0 0 2px var(--gold);
   z-index: 30;
 }
-.purse-back img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* Carta dada vuelta */
 .purse.flipped { transform: rotateY(180deg); }
 .purse.flipped .flap,
-.purse.flipped .base { opacity: 0; transition: opacity 0.2s ease 0.35s; }
+.purse.flipped .base,
+.purse.flipped .centro { opacity: 0; transition: opacity 0.2s ease 0.35s; }
 
 .hint {
   position: absolute;
-  bottom: -6px;
-  left: 0;
-  right: 0;
+  bottom: -2px; left: 0; right: 0;
   text-align: center;
   font-style: italic;
   color: var(--gold-soft);
@@ -154,18 +127,10 @@ body {
   pointer-events: none;
 }
 .hint.hidden { display: none; }
-
 @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.95; } }
 
 /* ---------- Controles ---------- */
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin: 26px 0 8px;
-}
-
+.controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 26px 0 8px; }
 .ctrl-btn {
   font-family: "EB Garamond", serif;
   font-size: 1rem;
@@ -175,36 +140,18 @@ body {
   border-radius: 6px;
   padding: 10px 18px;
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 .ctrl-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4); }
 .ctrl-btn:active { transform: translateY(0); }
 .ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-.ctrl-primary {
-  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
-  color: #2a1d12;
-  font-weight: 700;
-}
+.ctrl-primary { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #2a1d12; font-weight: 700; }
 
 /* ---------- Índice de partes ---------- */
 .parts { width: min(92vw, 760px); margin-top: 24px; text-align: center; }
-
-.parts-title {
-  font-family: "Playfair Display", serif;
-  color: var(--gold-soft);
-  font-size: 1.3rem;
-  margin-bottom: 14px;
-  font-weight: 400;
-}
-
-.parts-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 12px;
-}
-
+.parts-title { font-family: "Playfair Display", serif; color: var(--gold-soft); font-size: 1.3rem; margin-bottom: 14px; font-weight: 400; }
+.parts-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 12px; }
 .part-thumb {
   position: relative;
   border: 1px solid var(--gold);
@@ -218,14 +165,10 @@ body {
 .part-thumb:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45); }
 .part-thumb.active { outline: 3px solid var(--gold-soft); outline-offset: 2px; }
 .part-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
 .part-thumb span {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  background: rgba(28, 20, 16, 0.8);
-  color: var(--parchment);
-  font-size: 0.8rem;
-  padding: 3px 4px;
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(28, 20, 16, 0.8); color: var(--parchment);
+  font-size: 0.78rem; padding: 3px 4px;
 }
 
 /* ---------- Pie ---------- */
@@ -234,5 +177,5 @@ body {
 
 @media (max-width: 480px) {
   .ctrl-btn { padding: 9px 12px; font-size: 0.92rem; }
-  .purse { width: 50%; }
+  .purse { width: 54%; }
 }

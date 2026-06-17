@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <rect width="600" height="600" fill="#efdcb6"/>
+  <!-- Contenido en el cuadrado central (lo visible cuando está cerrada) -->
+  <rect x="170" y="160" width="260" height="300" fill="#f6ecd2" stroke="#3a2a18" stroke-width="3"/>
+  <g fill="none" stroke="#3a2a18" stroke-width="2.5">
+    <path d="M300 200 C330 220 330 250 300 270 C270 250 270 220 300 200 Z"/>
+    <path d="M300 270 L300 380 M270 320 L330 320"/>
+    <path d="M250 430 q50 -40 100 0"/>
+  </g>
+  <text x="225" y="330" font-family="Georgia, serif" font-size="34" fill="#3a2a18" text-anchor="middle" font-style="italic" transform="rotate(-90 225 330)">love</text>
+  <text x="400" y="210" font-family="Georgia, serif" font-size="26" fill="#7a5c2e" text-anchor="middle">✦</text>
+  <text x="415" y="250" font-family="Georgia, serif" font-size="18" fill="#7a5c2e" text-anchor="middle">✦</text>
+</svg>

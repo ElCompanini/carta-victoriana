@@ -1,15 +1,17 @@
 # Carta Victoriana Interactiva
 
-Página web estática e interactiva de una **carta victoriana** estilo *puzzle purse*:
-un cuadrado con **4 solapas triangulares** dobladas al centro que se van
-desplegando hacia afuera para revelar el dibujo interior, con un **sonido suave
-de hoja** en cada acción.
+Página web estática e interactiva de una **carta victoriana** real (*puzzle purse*)
+que se despliega en **3 etapas**, con un **sonido suave de hoja** en cada acción:
+
+1. **Cerrada** → cuadrado pequeño (panel central).
+2. **Estrella** → se despliegan 4 solapas interiores formando una estrella de 4 puntas.
+3. **Abierta** → se despliegan las 4 esquinas y queda el cuadrado grande y plano con todos los dibujos.
 
 ## Funciones
 
-- 🖱️ **Clic para desplegar** las solapas una a una (también botón "Desplegar solapa" o flecha →). También puedes clicar directamente una solapa para abrirla o cerrarla.
+- 🖱️ **Clic para desplegar** paso a paso (primero las 4 puntas, luego las 4 esquinas). También botón "Desplegar" o flecha →. Puedes clicar una solapa abierta para volver a cerrarla.
 - 🍃 **Sonido suave de hoja** en cada acción (generado en el navegador, sin archivos de audio). Se puede silenciar.
-- 🗂️ **Ver cada parte por separado** desde el índice de miniaturas (abre solo esa solapa; o "Interior" para abrirlas todas).
+- 🗂️ **Ver cada parte por separado** desde el índice de miniaturas (abre solo esa solapa; o "Abrir todo").
 - ⌂ **Volver al inicio** / cerrar todo (botón Inicio o tecla Home).
 - ↩ **Deshacer** la última acción (botón Deshacer o flecha ←).
 - ⟲ **Dar vuelta la carta** para ver el reverso (botón "Dar vuelta" o tecla F).
@@ -21,12 +23,11 @@ La forma fácil: reemplaza cada archivo manteniendo el mismo nombre.
 
 | Archivo | Qué es |
 | --- | --- |
-| `centro.svg`   | Dibujo del **interior** (se revela al abrir las solapas) |
-| `solapa-n.svg` | Cara visible de la solapa **Norte** (arriba) |
-| `solapa-e.svg` | Cara visible de la solapa **Este** (derecha) |
-| `solapa-s.svg` | Cara visible de la solapa **Sur** (abajo) |
-| `solapa-w.svg` | Cara visible de la solapa **Oeste** (izquierda) |
-| `reverso.svg`  | **Reverso** de la carta (al "dar vuelta") |
+| `centro-cerrado.svg` | Panel central visible cuando la carta está **cerrada** |
+| `centro.svg`         | Dibujo **central** que se revela al abrir la estrella |
+| `solapa-n/e/s/w.svg` | Las 4 **puntas** de la estrella (interiores) |
+| `esq-tl/tr/br/bl.svg`| Las 4 **esquinas** (se despliegan al final) |
+| `reverso.svg`        | **Reverso** de la carta (al "dar vuelta") |
 
 Si cambias la extensión (ej. `.jpg`) o los nombres, edita las rutas en el objeto
 `CONFIG` al inicio de `script.js`.

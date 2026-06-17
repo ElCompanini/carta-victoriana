@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <rect width="600" height="600" fill="#e3d0aa"/>
+  <g fill="none" stroke="#3a2a18" stroke-width="3">
+    <path d="M540 200 Q450 60 310 70" />
+    <path d="M510 160 q-40 -50 -100 -60"/>
+    <path d="M450 120 l40 40 m0 -40 l-40 40"/>
+  </g>
+  <text x="450" y="250" font-family="Georgia, serif" font-size="20" fill="#7a5c2e" text-anchor="middle" font-style="italic">esquina</text>
+</svg>

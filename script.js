@@ -1,38 +1,59 @@
 /* ============================================================
-   CARTA VICTORIANA INTERACTIVA  ·  estilo "puzzle purse"
+   CARTA VICTORIANA INTERACTIVA  ·  "puzzle purse" de 3 etapas
    ------------------------------------------------------------
-   Un cuadrado con 4 solapas triangulares dobladas al centro.
-   Cada solapa se despliega hacia afuera y revela el dibujo
-   interior. Sonido suave de hoja en cada acción.
+   Etapas (como las cartas reales):
+     1. CERRADA      → cuadrado central pequeño (panel "love").
+     2. ESTRELLA     → se despliegan las 4 solapas interiores
+                       (las puntas: sol, luna, etc.).
+     3. ABIERTA      → se despliegan las 4 esquinas y queda el
+                       cuadrado grande y plano con todos los dibujos.
 
-   Para personalizar, reemplaza las imágenes de /images o cambia
-   las rutas en CONFIG. Puedes usar JPG, PNG, WEBP o SVG.
+   Mecánica: cada solapa va doblada hacia el centro (oculta) y al
+   abrirse gira 180° hasta quedar plana mostrando su dibujo.
+
+   Para personalizar, reemplaza las imágenes de /images (mismo
+   nombre) o cambia las rutas en CONFIG. Sirve JPG, PNG, WEBP, SVG.
    ============================================================ */
 const CONFIG = {
-  // Dibujo del interior (se revela al desplegar las solapas)
-  interior: "images/centro.svg",
-  // Reverso de la carta (al "dar vuelta")
-  reverso: "images/reverso.svg",
-  // Las 4 solapas. "cover" = dibujo visible cuando está cerrada.
-  // El orden define qué solapa abre el botón "Desplegar solapa".
-  solapas: [
-    { id: "n", nombre: "Solapa Norte", cover: "images/solapa-n.svg" },
-    { id: "e", nombre: "Solapa Este",  cover: "images/solapa-e.svg" },
-    { id: "s", nombre: "Solapa Sur",   cover: "images/solapa-s.svg" },
-    { id: "w", nombre: "Solapa Oeste", cover: "images/solapa-w.svg" },
+  centroCerrado: "images/centro-cerrado.svg", // panel central con la carta cerrada
+  centroAbierto: "images/centro.svg",         // dibujo central revelado (abierta)
+  reverso: "images/reverso.svg",              // al "dar vuelta"
+
+  // 8 solapas: 4 interiores (estrella) + 4 esquinas. El orden define
+  // qué abre el botón "Desplegar" (primero la estrella, luego las esquinas).
+  flaps: [
+    // --- Interiores: forman la ESTRELLA ---
+    { id: "in-n", capa: "in", nombre: "Punta Norte", cover: "images/solapa-n.svg",
+      clip: "polygon(50% 0, 75% 25%, 25% 25%)", origin: "50% 25%", fold: "rotate3d(1,0,0,180deg)" },
+    { id: "in-e", capa: "in", nombre: "Punta Este", cover: "images/solapa-e.svg",
+      clip: "polygon(100% 50%, 75% 25%, 75% 75%)", origin: "75% 50%", fold: "rotate3d(0,1,0,180deg)" },
+    { id: "in-s", capa: "in", nombre: "Punta Sur", cover: "images/solapa-s.svg",
+      clip: "polygon(50% 100%, 75% 75%, 25% 75%)", origin: "50% 75%", fold: "rotate3d(1,0,0,180deg)" },
+    { id: "in-w", capa: "in", nombre: "Punta Oeste", cover: "images/solapa-w.svg",
+      clip: "polygon(0 50%, 25% 25%, 25% 75%)", origin: "25% 50%", fold: "rotate3d(0,1,0,180deg)" },
+    // --- Esquinas: completan el CUADRADO ---
+    { id: "out-tl", capa: "out", nombre: "Esquina sup. izq.", cover: "images/esq-tl.svg",
+      clip: "polygon(0 0, 50% 0, 0 50%)", origin: "25% 25%", fold: "rotate3d(-1,1,0,180deg)" },
+    { id: "out-tr", capa: "out", nombre: "Esquina sup. der.", cover: "images/esq-tr.svg",
+      clip: "polygon(100% 0, 50% 0, 100% 50%)", origin: "75% 25%", fold: "rotate3d(1,1,0,180deg)" },
+    { id: "out-br", capa: "out", nombre: "Esquina inf. der.", cover: "images/esq-br.svg",
+      clip: "polygon(100% 100%, 100% 50%, 50% 100%)", origin: "75% 75%", fold: "rotate3d(-1,1,0,180deg)" },
+    { id: "out-bl", capa: "out", nombre: "Esquina inf. izq.", cover: "images/esq-bl.svg",
+      clip: "polygon(0 100%, 0 50%, 50% 100%)", origin: "25% 75%", fold: "rotate3d(1,1,0,180deg)" },
   ],
 };
 
-const ORDEN = CONFIG.solapas.map((s) => s.id);
+const ORDEN = CONFIG.flaps.map((f) => f.id);
+const INNER = CONFIG.flaps.filter((f) => f.capa === "in").map((f) => f.id);
 
 /* ---------- Estado ---------- */
-let abierta = {};                 // { n:false, e:false, ... }
+let abierta = {};
 ORDEN.forEach((id) => (abierta[id] = false));
 let volteada = false;
 let sonidoActivo = true;
-const historial = [];             // pila de estados previos (para deshacer)
+const historial = [];
 
-/* ---------- Referencias del DOM ---------- */
+/* ---------- DOM ---------- */
 const purse = document.getElementById("purse");
 const stage = document.getElementById("stage");
 const hint = document.getElementById("hint");
@@ -43,11 +64,12 @@ const btnOpen = document.getElementById("btn-open");
 const btnFlip = document.getElementById("btn-flip");
 const btnSound = document.getElementById("btn-sound");
 
+let centroEl = null;
+
 /* ============================================================
    SONIDO SUAVE DE HOJAS (generado, sin archivos externos)
    ============================================================ */
 let audioCtx = null;
-
 function initAudio() {
   if (!audioCtx) {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -55,12 +77,10 @@ function initAudio() {
   }
   if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
 }
-
 function sonidoHoja() {
   if (!sonidoActivo) return;
   initAudio();
   if (!audioCtx) return;
-
   const dur = 0.45;
   const frames = Math.floor(dur * audioCtx.sampleRate);
   const buffer = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
@@ -70,27 +90,17 @@ function sonidoHoja() {
     const env = Math.sin(Math.PI * t) * (1 - t * 0.6);
     data[i] = (Math.random() * 2 - 1) * env * 0.5;
   }
-
   const source = audioCtx.createBufferSource();
   source.buffer = buffer;
-
   const bandpass = audioCtx.createBiquadFilter();
-  bandpass.type = "bandpass";
-  bandpass.frequency.value = 1800;
-  bandpass.Q.value = 0.7;
-
+  bandpass.type = "bandpass"; bandpass.frequency.value = 1800; bandpass.Q.value = 0.7;
   const lowpass = audioCtx.createBiquadFilter();
-  lowpass.type = "lowpass";
-  lowpass.frequency.value = 3200;
-
+  lowpass.type = "lowpass"; lowpass.frequency.value = 3200;
   const gain = audioCtx.createGain();
   gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.32, audioCtx.currentTime + 0.04);
   gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
-
-  source.connect(bandpass);
-  bandpass.connect(lowpass);
-  lowpass.connect(gain);
+  source.connect(bandpass); bandpass.connect(lowpass); lowpass.connect(gain);
   gain.connect(audioCtx.destination);
   source.start();
 }
@@ -98,71 +108,57 @@ function sonidoHoja() {
 /* ============================================================
    CONSTRUCCIÓN DEL DOM
    ============================================================ */
+function imagen(src, alt) {
+  const img = document.createElement("img");
+  img.src = src; img.alt = alt; img.draggable = false;
+  return img;
+}
+
 function construir() {
   purse.innerHTML = "";
 
-  // Base (dibujo interior)
+  // Base: panel central cerrado
   const base = document.createElement("div");
   base.className = "base";
-  const baseImg = document.createElement("img");
-  baseImg.src = CONFIG.interior;
-  baseImg.alt = "Dibujo interior de la carta";
-  baseImg.draggable = false;
-  base.appendChild(baseImg);
+  base.appendChild(imagen(CONFIG.centroCerrado, "Panel central (cerrada)"));
   purse.appendChild(base);
 
+  // Centro: dibujo revelado (abierta)
+  centroEl = document.createElement("div");
+  centroEl.className = "centro";
+  centroEl.appendChild(imagen(CONFIG.centroAbierto, "Dibujo central"));
+  purse.appendChild(centroEl);
+
   // Solapas
-  CONFIG.solapas.forEach((s) => {
+  CONFIG.flaps.forEach((f) => {
     const flap = document.createElement("div");
-    flap.className = "flap " + s.id;
-    flap.dataset.id = s.id;
-    flap.title = s.nombre;
-
-    const front = document.createElement("div");
-    front.className = "flap-face front";
-    const frontImg = document.createElement("img");
-    frontImg.src = s.cover;
-    frontImg.alt = s.nombre;
-    frontImg.draggable = false;
-    front.appendChild(frontImg);
-
-    const back = document.createElement("div");
-    back.className = "flap-face back";
-
-    flap.appendChild(back);
-    flap.appendChild(front);
-    flap.addEventListener("click", (e) => {
-      e.stopPropagation();
-      alternarSolapa(s.id);
-    });
+    flap.className = "flap capa-" + f.capa;
+    flap.dataset.id = f.id;
+    flap.title = f.nombre;
+    flap.style.clipPath = f.clip;
+    flap.style.transformOrigin = f.origin;
+    flap.appendChild(imagen(f.cover, f.nombre));
+    flap.addEventListener("click", (e) => { e.stopPropagation(); alternarSolapa(f.id); });
     purse.appendChild(flap);
   });
 
-  // Reverso de la carta
+  // Reverso de toda la carta
   const pback = document.createElement("div");
   pback.className = "purse-back";
-  const pbackImg = document.createElement("img");
-  pbackImg.src = CONFIG.reverso;
-  pbackImg.alt = "Reverso de la carta";
-  pbackImg.draggable = false;
-  pback.appendChild(pbackImg);
+  pback.appendChild(imagen(CONFIG.reverso, "Reverso de la carta"));
   purse.appendChild(pback);
 }
 
 function construirIndice() {
   partsList.innerHTML = "";
-
-  // Una miniatura por solapa
-  CONFIG.solapas.forEach((s) => {
-    const thumb = crearThumb(s.cover, s.nombre, "flap:" + s.id);
-    thumb.addEventListener("click", () => verSolapa(s.id));
+  CONFIG.flaps.forEach((f) => {
+    const thumb = crearThumb(f.cover, f.nombre, "flap:" + f.id);
+    thumb.addEventListener("click", () => verSolapa(f.id));
     partsList.appendChild(thumb);
   });
-
-  // Miniatura del interior (abre todas)
-  const thumbInt = crearThumb(CONFIG.interior, "Interior (todo abierto)", "interior");
-  thumbInt.addEventListener("click", abrirTodo);
-  partsList.appendChild(thumbInt);
+  const thumbAll = crearThumb(CONFIG.centroAbierto, "Abrir todo", "todo");
+  thumbAll.addEventListener("click", abrirTodo);
+  partsList.appendChild(thumbAll);
 }
 
 function crearThumb(src, nombre, key) {
@@ -170,13 +166,9 @@ function crearThumb(src, nombre, key) {
   thumb.className = "part-thumb";
   thumb.dataset.key = key;
   thumb.title = "Ver " + nombre;
-  const img = document.createElement("img");
-  img.src = src;
-  img.alt = nombre;
-  img.draggable = false;
+  thumb.appendChild(imagen(src, nombre));
   const label = document.createElement("span");
   label.textContent = nombre;
-  thumb.appendChild(img);
   thumb.appendChild(label);
   return thumb;
 }
@@ -185,17 +177,23 @@ function crearThumb(src, nombre, key) {
    RENDER
    ============================================================ */
 function render() {
-  purse.querySelectorAll(".flap").forEach((flap) => {
-    flap.classList.toggle("open", !!abierta[flap.dataset.id]);
+  CONFIG.flaps.forEach((f) => {
+    const flap = purse.querySelector('.flap[data-id="' + f.id + '"]');
+    const isOpen = !!abierta[f.id];
+    flap.classList.toggle("open", isOpen);
+    flap.style.transform = isOpen ? "" : f.fold;
   });
+
+  // El dibujo central se muestra cuando la estrella (interiores) está abierta
+  const estrellaAbierta = INNER.every((id) => abierta[id]);
+  centroEl.style.opacity = estrellaAbierta ? "1" : "0";
 
   const todasAbiertas = ORDEN.every((id) => abierta[id]);
   const algunaAbierta = ORDEN.some((id) => abierta[id]);
 
-  // Resaltar partes activas
   partsList.querySelectorAll(".part-thumb").forEach((t) => {
     const key = t.dataset.key;
-    if (key === "interior") t.classList.toggle("active", todasAbiertas);
+    if (key === "todo") t.classList.toggle("active", todasAbiertas);
     else t.classList.toggle("active", !!abierta[key.split(":")[1]]);
   });
 
@@ -207,9 +205,7 @@ function render() {
 /* ============================================================
    ACCIONES
    ============================================================ */
-function snapshot() {
-  historial.push(JSON.stringify(abierta));
-}
+function snapshot() { historial.push(JSON.stringify(abierta)); }
 
 function alternarSolapa(id) {
   snapshot();
@@ -217,31 +213,26 @@ function alternarSolapa(id) {
   sonidoHoja();
   render();
 }
-
 function desplegarSiguiente() {
-  const siguiente = ORDEN.find((id) => !abierta[id]);
-  if (!siguiente) return;
+  const sig = ORDEN.find((id) => !abierta[id]);
+  if (!sig) return;
   snapshot();
-  abierta[siguiente] = true;
+  abierta[sig] = true;
   sonidoHoja();
   render();
 }
-
-// Ver una sola solapa abierta (las demás cerradas)
 function verSolapa(id) {
   snapshot();
   ORDEN.forEach((k) => (abierta[k] = k === id));
   sonidoHoja();
   render();
 }
-
 function abrirTodo() {
   snapshot();
   ORDEN.forEach((k) => (abierta[k] = true));
   sonidoHoja();
   render();
 }
-
 function volverInicio() {
   if (!ORDEN.some((id) => abierta[id])) return;
   snapshot();
@@ -249,14 +240,12 @@ function volverInicio() {
   sonidoHoja();
   render();
 }
-
 function deshacer() {
   if (historial.length === 0) return;
   abierta = JSON.parse(historial.pop());
   sonidoHoja();
   render();
 }
-
 function darVuelta() {
   volteada = !volteada;
   purse.classList.toggle("flipped", volteada);
@@ -264,7 +253,6 @@ function darVuelta() {
   sonidoHoja();
   render();
 }
-
 function alternarSonido() {
   sonidoActivo = !sonidoActivo;
   btnSound.textContent = sonidoActivo ? "🔊 Sonido" : "🔇 Silencio";
@@ -279,18 +267,15 @@ function clicEscenario() {
   if (volteada) { darVuelta(); return; }
   desplegarSiguiente();
 }
-
 stage.addEventListener("click", clicEscenario);
 stage.addEventListener("keydown", (e) => {
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); clicEscenario(); }
 });
-
 btnOpen.addEventListener("click", (e) => { e.stopPropagation(); desplegarSiguiente(); });
 btnUndo.addEventListener("click", (e) => { e.stopPropagation(); deshacer(); });
 btnHome.addEventListener("click", (e) => { e.stopPropagation(); volverInicio(); });
 btnFlip.addEventListener("click", (e) => { e.stopPropagation(); darVuelta(); });
 btnSound.addEventListener("click", (e) => { e.stopPropagation(); alternarSonido(); });
-
 document.addEventListener("keydown", (e) => {
   if (e.target === stage) return;
   if (e.key === "ArrowRight") desplegarSiguiente();

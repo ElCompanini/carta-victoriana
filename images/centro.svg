@@ -1,11 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
   <rect width="600" height="600" fill="#f3e6c8"/>
-  <rect x="14" y="14" width="572" height="572" fill="none" stroke="#c9a24b" stroke-width="3"/>
-  <g fill="none" stroke="#7a5c2e" stroke-width="3">
-    <path d="M300 250 C250 200 175 230 195 300 C210 355 300 410 300 410 C300 410 390 355 405 300 C425 230 350 200 300 250 Z"/>
-    <path d="M150 150 q30 0 30 30 M450 150 q-30 0 -30 30 M150 450 q30 0 30 -30 M450 450 q-30 0 -30 -30"/>
+  <!-- Lo visible es el cuadrado central (25%-75% = 150..450) -->
+  <g fill="none" stroke="#3a2a18" stroke-width="3">
+    <circle cx="300" cy="300" r="120"/>
+    <circle cx="300" cy="300" r="95"/>
+    <path d="M300 215 C260 255 260 320 300 360 C340 320 340 255 300 215 Z"/>
+    <path d="M230 300 q70 -45 140 0 q-70 45 -140 0 Z"/>
+    <circle cx="300" cy="300" r="14" fill="#3a2a18"/>
   </g>
-  <text x="300" y="150" font-family="Georgia, serif" font-size="30" fill="#3a2a18" text-anchor="middle" font-style="italic">Para ti</text>
-  <text x="300" y="480" font-family="Georgia, serif" font-size="22" fill="#7a5c2e" text-anchor="middle">Dibujo interior</text>
-  <text x="300" y="560" font-family="Georgia, serif" font-size="15" fill="#a98c55" text-anchor="middle">Reemplaza: images/centro.svg</text>
+  <text x="300" y="170" font-family="Georgia, serif" font-size="22" fill="#7a5c2e" text-anchor="middle" font-style="italic">centro</text>
 </svg>
