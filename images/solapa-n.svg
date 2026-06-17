@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <rect width="600" height="600" fill="#efdcb6"/>
+  <line x1="20" y1="20" x2="580" y2="20" stroke="#c9a24b" stroke-width="4"/>
+  <g fill="none" stroke="#7a5c2e" stroke-width="3">
+    <circle cx="300" cy="110" r="34"/>
+    <path d="M266 110 q34 -40 68 0 M266 110 q34 40 68 0"/>
+  </g>
+  <text x="300" y="185" font-family="Georgia, serif" font-size="26" fill="#3a2a18" text-anchor="middle" font-style="italic">Norte</text>
+</svg>

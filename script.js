@@ -1,46 +1,50 @@
 /* ============================================================
-   CARTA VICTORIANA INTERACTIVA
+   CARTA VICTORIANA INTERACTIVA  ·  estilo "puzzle purse"
    ------------------------------------------------------------
-   Para personalizar: edita el arreglo PARTES de abajo.
-   - "img"     : ruta de la imagen (reemplaza los archivos de /images
-                 por tus propios dibujos, manteniendo el nombre, o
-                 cambia aquí la ruta).
-   - "titulo"  : nombre corto que aparece en el índice de partes.
-   - "leyenda" : texto que aparece sobre la imagen al abrirla.
-   La PRIMERA entrada es la portada (carta cerrada).
-   ============================================================ */
-const PARTES = [
-  { img: "images/portada.svg", titulo: "Portada",   leyenda: "Una carta por abrir…" },
-  { img: "images/parte-1.svg", titulo: "Capa I",    leyenda: "Primer dibujo" },
-  { img: "images/parte-2.svg", titulo: "Capa II",   leyenda: "Segundo dibujo" },
-  { img: "images/parte-3.svg", titulo: "Capa III",  leyenda: "Tercer dibujo" },
-  { img: "images/parte-4.svg", titulo: "Capa IV",   leyenda: "Cuarto dibujo" },
-  { img: "images/parte-5.svg", titulo: "Capa V",    leyenda: "Última sorpresa" },
-];
+   Un cuadrado con 4 solapas triangulares dobladas al centro.
+   Cada solapa se despliega hacia afuera y revela el dibujo
+   interior. Sonido suave de hoja en cada acción.
 
-// Imagen del reverso (al "dar vuelta" la carta). Reemplaza el archivo o la ruta.
-const REVERSO = "images/reverso.svg";
+   Para personalizar, reemplaza las imágenes de /images o cambia
+   las rutas en CONFIG. Puedes usar JPG, PNG, WEBP o SVG.
+   ============================================================ */
+const CONFIG = {
+  // Dibujo del interior (se revela al desplegar las solapas)
+  interior: "images/centro.svg",
+  // Reverso de la carta (al "dar vuelta")
+  reverso: "images/reverso.svg",
+  // Las 4 solapas. "cover" = dibujo visible cuando está cerrada.
+  // El orden define qué solapa abre el botón "Desplegar solapa".
+  solapas: [
+    { id: "n", nombre: "Solapa Norte", cover: "images/solapa-n.svg" },
+    { id: "e", nombre: "Solapa Este",  cover: "images/solapa-e.svg" },
+    { id: "s", nombre: "Solapa Sur",   cover: "images/solapa-s.svg" },
+    { id: "w", nombre: "Solapa Oeste", cover: "images/solapa-w.svg" },
+  ],
+};
+
+const ORDEN = CONFIG.solapas.map((s) => s.id);
 
 /* ---------- Estado ---------- */
-let pasoActual = 0;            // índice de la capa visible (0 = portada)
-const historial = [];         // para "deshacer"
+let abierta = {};                 // { n:false, e:false, ... }
+ORDEN.forEach((id) => (abierta[id] = false));
+let volteada = false;
 let sonidoActivo = true;
-let volteada = false;         // ¿la carta está dada vuelta?
+const historial = [];             // pila de estados previos (para deshacer)
 
 /* ---------- Referencias del DOM ---------- */
-const card = document.getElementById("card");
+const purse = document.getElementById("purse");
 const stage = document.getElementById("stage");
 const hint = document.getElementById("hint");
 const partsList = document.getElementById("parts-list");
 const btnUndo = document.getElementById("btn-undo");
 const btnHome = document.getElementById("btn-home");
 const btnOpen = document.getElementById("btn-open");
-const btnSound = document.getElementById("btn-sound");
 const btnFlip = document.getElementById("btn-flip");
+const btnSound = document.getElementById("btn-sound");
 
 /* ============================================================
    SONIDO SUAVE DE HOJAS (generado, sin archivos externos)
-   Usa la Web Audio API para crear un "rustle" de papel suave.
    ============================================================ */
 let audioCtx = null;
 
@@ -58,22 +62,18 @@ function sonidoHoja() {
   if (!audioCtx) return;
 
   const dur = 0.45;
-  const sampleRate = audioCtx.sampleRate;
-  const frames = Math.floor(dur * sampleRate);
-  const buffer = audioCtx.createBuffer(1, frames, sampleRate);
+  const frames = Math.floor(dur * audioCtx.sampleRate);
+  const buffer = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
   const data = buffer.getChannelData(0);
-
-  // Ruido con envolvente suave = papel/hoja al pasar
   for (let i = 0; i < frames; i++) {
     const t = i / frames;
-    const envelope = Math.sin(Math.PI * t) * (1 - t * 0.6);
-    data[i] = (Math.random() * 2 - 1) * envelope * 0.5;
+    const env = Math.sin(Math.PI * t) * (1 - t * 0.6);
+    data[i] = (Math.random() * 2 - 1) * env * 0.5;
   }
 
   const source = audioCtx.createBufferSource();
   source.buffer = buffer;
 
-  // Filtro pasa-banda para hacerlo "suave" y no áspero
   const bandpass = audioCtx.createBiquadFilter();
   bandpass.type = "bandpass";
   bandpass.frequency.value = 1800;
@@ -85,7 +85,7 @@ function sonidoHoja() {
 
   const gain = audioCtx.createGain();
   gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.35, audioCtx.currentTime + 0.04);
+  gain.gain.exponentialRampToValueAtTime(0.32, audioCtx.currentTime + 0.04);
   gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
 
   source.connect(bandpass);
@@ -96,131 +96,173 @@ function sonidoHoja() {
 }
 
 /* ============================================================
-   CONSTRUCCIÓN DE LAS CAPAS
+   CONSTRUCCIÓN DEL DOM
    ============================================================ */
-function construirCarta() {
-  card.innerHTML = "";
-  // Se crean de la última a la primera para que la portada quede arriba (z-index)
-  PARTES.forEach((parte, i) => {
-    const layer = document.createElement("div");
-    layer.className = "layer";
-    layer.style.zIndex = String(PARTES.length - i);
-    layer.dataset.index = String(i);
+function construir() {
+  purse.innerHTML = "";
 
-    const img = document.createElement("img");
-    img.src = parte.img;
-    img.alt = parte.titulo;
-    img.draggable = false;
+  // Base (dibujo interior)
+  const base = document.createElement("div");
+  base.className = "base";
+  const baseImg = document.createElement("img");
+  baseImg.src = CONFIG.interior;
+  baseImg.alt = "Dibujo interior de la carta";
+  baseImg.draggable = false;
+  base.appendChild(baseImg);
+  purse.appendChild(base);
 
-    const caption = document.createElement("div");
-    caption.className = "layer-caption";
-    caption.textContent = parte.leyenda;
+  // Solapas
+  CONFIG.solapas.forEach((s) => {
+    const flap = document.createElement("div");
+    flap.className = "flap " + s.id;
+    flap.dataset.id = s.id;
+    flap.title = s.nombre;
 
-    layer.appendChild(img);
-    layer.appendChild(caption);
-    card.appendChild(layer);
+    const front = document.createElement("div");
+    front.className = "flap-face front";
+    const frontImg = document.createElement("img");
+    frontImg.src = s.cover;
+    frontImg.alt = s.nombre;
+    frontImg.draggable = false;
+    front.appendChild(frontImg);
+
+    const back = document.createElement("div");
+    back.className = "flap-face back";
+
+    flap.appendChild(back);
+    flap.appendChild(front);
+    flap.addEventListener("click", (e) => {
+      e.stopPropagation();
+      alternarSolapa(s.id);
+    });
+    purse.appendChild(flap);
   });
 
-  // Reverso de la carta (visible al darla vuelta)
-  const back = document.createElement("div");
-  back.className = "card-back";
-  const backImg = document.createElement("img");
-  backImg.src = REVERSO;
-  backImg.alt = "Reverso de la carta";
-  backImg.draggable = false;
-  back.appendChild(backImg);
-  card.appendChild(back);
+  // Reverso de la carta
+  const pback = document.createElement("div");
+  pback.className = "purse-back";
+  const pbackImg = document.createElement("img");
+  pbackImg.src = CONFIG.reverso;
+  pbackImg.alt = "Reverso de la carta";
+  pbackImg.draggable = false;
+  pback.appendChild(pbackImg);
+  purse.appendChild(pback);
 }
 
 function construirIndice() {
   partsList.innerHTML = "";
-  PARTES.forEach((parte, i) => {
-    const thumb = document.createElement("div");
-    thumb.className = "part-thumb";
-    thumb.dataset.index = String(i);
-    thumb.title = "Ver " + parte.titulo;
 
-    const img = document.createElement("img");
-    img.src = parte.img;
-    img.alt = parte.titulo;
-    img.draggable = false;
-
-    const label = document.createElement("span");
-    label.textContent = parte.titulo;
-
-    thumb.appendChild(img);
-    thumb.appendChild(label);
-    thumb.addEventListener("click", () => irAParte(i));
+  // Una miniatura por solapa
+  CONFIG.solapas.forEach((s) => {
+    const thumb = crearThumb(s.cover, s.nombre, "flap:" + s.id);
+    thumb.addEventListener("click", () => verSolapa(s.id));
     partsList.appendChild(thumb);
   });
+
+  // Miniatura del interior (abre todas)
+  const thumbInt = crearThumb(CONFIG.interior, "Interior (todo abierto)", "interior");
+  thumbInt.addEventListener("click", abrirTodo);
+  partsList.appendChild(thumbInt);
+}
+
+function crearThumb(src, nombre, key) {
+  const thumb = document.createElement("div");
+  thumb.className = "part-thumb";
+  thumb.dataset.key = key;
+  thumb.title = "Ver " + nombre;
+  const img = document.createElement("img");
+  img.src = src;
+  img.alt = nombre;
+  img.draggable = false;
+  const label = document.createElement("span");
+  label.textContent = nombre;
+  thumb.appendChild(img);
+  thumb.appendChild(label);
+  return thumb;
 }
 
 /* ============================================================
-   RENDERIZADO segun el paso actual
+   RENDER
    ============================================================ */
 function render() {
-  const layers = card.querySelectorAll(".layer");
-  layers.forEach((layer) => {
-    const idx = Number(layer.dataset.index);
-    // Las capas con índice menor que el paso actual están abiertas (giradas)
-    layer.classList.toggle("is-open", idx < pasoActual);
-    layer.classList.toggle("is-current", idx === pasoActual);
+  purse.querySelectorAll(".flap").forEach((flap) => {
+    flap.classList.toggle("open", !!abierta[flap.dataset.id]);
   });
 
-  // Resaltar parte activa en el índice
+  const todasAbiertas = ORDEN.every((id) => abierta[id]);
+  const algunaAbierta = ORDEN.some((id) => abierta[id]);
+
+  // Resaltar partes activas
   partsList.querySelectorAll(".part-thumb").forEach((t) => {
-    t.classList.toggle("active", Number(t.dataset.index) === pasoActual);
+    const key = t.dataset.key;
+    if (key === "interior") t.classList.toggle("active", todasAbiertas);
+    else t.classList.toggle("active", !!abierta[key.split(":")[1]]);
   });
 
-  // Botones
   btnUndo.disabled = historial.length === 0;
-  btnOpen.disabled = pasoActual >= PARTES.length - 1;
-
-  // Pista
-  hint.classList.toggle("hidden", pasoActual > 0);
+  btnOpen.disabled = todasAbiertas;
+  hint.classList.toggle("hidden", algunaAbierta || volteada);
 }
 
 /* ============================================================
    ACCIONES
    ============================================================ */
-function abrirSiguiente() {
-  if (pasoActual >= PARTES.length - 1) return;
-  historial.push(pasoActual);
-  pasoActual++;
+function snapshot() {
+  historial.push(JSON.stringify(abierta));
+}
+
+function alternarSolapa(id) {
+  snapshot();
+  abierta[id] = !abierta[id];
+  sonidoHoja();
+  render();
+}
+
+function desplegarSiguiente() {
+  const siguiente = ORDEN.find((id) => !abierta[id]);
+  if (!siguiente) return;
+  snapshot();
+  abierta[siguiente] = true;
+  sonidoHoja();
+  render();
+}
+
+// Ver una sola solapa abierta (las demás cerradas)
+function verSolapa(id) {
+  snapshot();
+  ORDEN.forEach((k) => (abierta[k] = k === id));
+  sonidoHoja();
+  render();
+}
+
+function abrirTodo() {
+  snapshot();
+  ORDEN.forEach((k) => (abierta[k] = true));
+  sonidoHoja();
+  render();
+}
+
+function volverInicio() {
+  if (!ORDEN.some((id) => abierta[id])) return;
+  snapshot();
+  ORDEN.forEach((k) => (abierta[k] = false));
   sonidoHoja();
   render();
 }
 
 function deshacer() {
   if (historial.length === 0) return;
-  pasoActual = historial.pop();
+  abierta = JSON.parse(historial.pop());
   sonidoHoja();
   render();
 }
 
-function volverInicio() {
-  if (pasoActual === 0 && historial.length === 0) return;
-  historial.push(pasoActual);
-  pasoActual = 0;
-  sonidoHoja();
-  render();
-}
-
-// Ir a una parte concreta (cada parte se puede ver por separado)
-function irAParte(i) {
-  if (i === pasoActual) return;
-  historial.push(pasoActual);
-  pasoActual = i;
-  sonidoHoja();
-  render();
-}
-
-// Dar vuelta la carta para ver el reverso (y volver a verla de frente)
 function darVuelta() {
   volteada = !volteada;
-  card.classList.toggle("flipped", volteada);
+  purse.classList.toggle("flipped", volteada);
   btnFlip.textContent = volteada ? "⟲ Ver frente" : "⟲ Dar vuelta";
   sonidoHoja();
+  render();
 }
 
 function alternarSonido() {
@@ -234,9 +276,8 @@ function alternarSonido() {
    EVENTOS
    ============================================================ */
 function clicEscenario() {
-  // Si la carta está dada vuelta, un clic la regresa al frente
   if (volteada) { darVuelta(); return; }
-  abrirSiguiente();
+  desplegarSiguiente();
 }
 
 stage.addEventListener("click", clicEscenario);
@@ -244,22 +285,21 @@ stage.addEventListener("keydown", (e) => {
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); clicEscenario(); }
 });
 
-btnOpen.addEventListener("click", (e) => { e.stopPropagation(); abrirSiguiente(); });
+btnOpen.addEventListener("click", (e) => { e.stopPropagation(); desplegarSiguiente(); });
 btnUndo.addEventListener("click", (e) => { e.stopPropagation(); deshacer(); });
 btnHome.addEventListener("click", (e) => { e.stopPropagation(); volverInicio(); });
-btnSound.addEventListener("click", (e) => { e.stopPropagation(); alternarSonido(); });
 btnFlip.addEventListener("click", (e) => { e.stopPropagation(); darVuelta(); });
+btnSound.addEventListener("click", (e) => { e.stopPropagation(); alternarSonido(); });
 
-// Atajos de teclado
 document.addEventListener("keydown", (e) => {
-  if (e.target === stage) return; // ya manejado arriba
-  if (e.key === "ArrowRight") abrirSiguiente();
+  if (e.target === stage) return;
+  if (e.key === "ArrowRight") desplegarSiguiente();
   if (e.key === "ArrowLeft") deshacer();
   if (e.key === "Home") volverInicio();
   if (e.key === "f" || e.key === "F") darVuelta();
 });
 
 /* ---------- Inicio ---------- */
-construirCarta();
+construir();
 construirIndice();
 render();

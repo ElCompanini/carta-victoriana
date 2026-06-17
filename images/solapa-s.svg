@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <rect width="600" height="600" fill="#efdcb6"/>
+  <line x1="20" y1="580" x2="580" y2="580" stroke="#c9a24b" stroke-width="4"/>
+  <g fill="none" stroke="#7a5c2e" stroke-width="3">
+    <path d="M300 455 L340 495 L300 535 L260 495 Z"/>
+    <circle cx="300" cy="495" r="10" fill="#7a5c2e"/>
+  </g>
+  <text x="300" y="430" font-family="Georgia, serif" font-size="26" fill="#3a2a18" text-anchor="middle" font-style="italic">Sur</text>
+</svg>

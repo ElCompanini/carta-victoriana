@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <rect width="600" height="600" fill="#e7d3b0"/>
+  <line x1="20" y1="20" x2="20" y2="580" stroke="#c9a24b" stroke-width="4"/>
+  <g fill="none" stroke="#7a5c2e" stroke-width="3">
+    <path d="M110 266 L145 300 L110 334 M145 300 L180 300"/>
+    <circle cx="100" cy="300" r="30"/>
+  </g>
+  <text x="170" y="305" font-family="Georgia, serif" font-size="24" fill="#3a2a18" text-anchor="middle" font-style="italic" transform="rotate(-90 170 300)">Oeste</text>
+</svg>

@@ -12,23 +12,23 @@
 <body>
   <header class="topbar">
     <h1 class="title">Carta Victoriana</h1>
-    <p class="subtitle">Haz clic para ir abriendo la carta &mdash; cada capa revela un dibujo</p>
+    <p class="subtitle">Despliega las 4 solapas para revelar el dibujo del interior</p>
   </header>
 
-  <!-- Escenario de la carta -->
-  <main id="stage" class="stage" role="button" tabindex="0" aria-label="Abrir la carta">
-    <div id="card" class="card">
-      <!-- Las capas se generan dinámicamente desde script.js -->
+  <!-- Escenario de la carta (puzzle purse) -->
+  <main id="stage" class="stage" role="button" tabindex="0" aria-label="Abrir una solapa de la carta">
+    <div id="purse" class="purse">
+      <!-- base + solapas + reverso se generan en script.js -->
     </div>
-    <p class="hint" id="hint">✦ Haz clic en la carta para abrirla ✦</p>
+    <p class="hint" id="hint">✦ Haz clic en una solapa para desplegarla ✦</p>
   </main>
 
   <!-- Controles -->
   <nav class="controls" aria-label="Controles de la carta">
-    <button id="btn-undo" class="ctrl-btn" title="Deshacer el último clic">↩ Deshacer</button>
-    <button id="btn-home" class="ctrl-btn" title="Volver al inicio">⌂ Inicio</button>
+    <button id="btn-undo" class="ctrl-btn" title="Cerrar la última solapa abierta">↩ Deshacer</button>
+    <button id="btn-home" class="ctrl-btn" title="Cerrar todo y volver al inicio">⌂ Inicio</button>
     <button id="btn-flip" class="ctrl-btn" title="Dar vuelta la carta (ver el reverso)">⟲ Dar vuelta</button>
-    <button id="btn-open" class="ctrl-btn ctrl-primary" title="Abrir la siguiente capa">Abrir capa ➜</button>
+    <button id="btn-open" class="ctrl-btn ctrl-primary" title="Desplegar la siguiente solapa">Desplegar solapa ➜</button>
     <button id="btn-sound" class="ctrl-btn" title="Activar o silenciar el sonido" aria-pressed="true">🔊 Sonido</button>
   </nav>
 

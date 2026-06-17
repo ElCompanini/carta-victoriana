@@ -11,17 +11,12 @@
 
 * { box-sizing: border-box; }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  min-height: 100%;
-}
+html, body { margin: 0; padding: 0; min-height: 100%; }
 
 body {
   font-family: "EB Garamond", Georgia, serif;
   color: var(--parchment);
-  background:
-    radial-gradient(circle at 50% 20%, #34251a 0%, var(--bg-2) 45%, var(--bg-1) 100%);
+  background: radial-gradient(circle at 50% 20%, #34251a 0%, var(--bg-2) 45%, var(--bg-1) 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -42,20 +37,15 @@ body {
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
-.subtitle {
-  margin: 6px 0 0;
-  font-style: italic;
-  opacity: 0.8;
-  font-size: 1.05rem;
-}
+.subtitle { margin: 6px 0 0; font-style: italic; opacity: 0.8; font-size: 1.05rem; }
 
 /* ---------- Escenario ---------- */
 .stage {
   position: relative;
   width: min(92vw, 560px);
   height: min(92vw, 560px);
-  max-height: 60vh;
-  perspective: 1600px;
+  max-height: 64vh;
+  perspective: 1500px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,99 +56,94 @@ body {
 
 .stage:focus-visible { outline: 2px dashed var(--gold); outline-offset: 8px; }
 
-.card {
+/* La "carta" cuadrada (puzzle purse). Es pequeña para que las solapas
+   desplegadas quepan alrededor sin salirse del escenario. */
+.purse {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: 46%;
+  aspect-ratio: 1 / 1;
   transform-style: preserve-3d;
   transition: transform 0.9s cubic-bezier(0.6, 0.05, 0.25, 1);
 }
 
-/* Carta dada vuelta: muestra el reverso */
-.card.flipped { transform: rotateY(180deg); }
-
-/* Al estar volteada, las capas frontales se ocultan a mitad del giro
-   para que solo se vea el reverso (evita que capas abiertas asomen). */
-.card.flipped .layer { transition: opacity 0.2s ease 0.35s; opacity: 0; }
-
-/* Reverso de la carta */
-.card-back {
+/* Dibujo interior (se revela al abrir las solapas) */
+.base {
   position: absolute;
   inset: 0;
-  border-radius: 8px;
+  border-radius: 4px;
   overflow: hidden;
   background: var(--parchment);
+  backface-visibility: hidden;
+  box-shadow: inset 0 0 0 2px rgba(201, 162, 75, 0.6);
+  z-index: 1;
+}
+
+.base img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Cada solapa triangular */
+.flap {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.75s cubic-bezier(0.34, 1.2, 0.64, 1);
+  z-index: 5;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
+}
+
+/* Recorte de cada solapa en triángulo (apex en el centro) */
+.flap.n { clip-path: polygon(0 0, 100% 0, 50% 50%); transform-origin: 50% 0%; }
+.flap.e { clip-path: polygon(100% 0, 100% 100%, 50% 50%); transform-origin: 100% 50%; }
+.flap.s { clip-path: polygon(0 100%, 100% 100%, 50% 50%); transform-origin: 50% 100%; }
+.flap.w { clip-path: polygon(0 0, 0 100%, 50% 50%); transform-origin: 0% 50%; }
+
+/* Solapa desplegada: gira 180° sobre su borde exterior y queda hacia afuera */
+.flap.n.open { transform: rotateX(180deg); }
+.flap.s.open { transform: rotateX(-180deg); }
+.flap.e.open { transform: rotateY(-180deg); }
+.flap.w.open { transform: rotateY(180deg); }
+
+/* Caras de la solapa */
+.flap-face { position: absolute; inset: 0; backface-visibility: hidden; }
+.flap-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Cara frontal = dibujo de la portada (visible cuando está cerrada) */
+.flap-face.front {
+  background: var(--parchment);
+  box-shadow: inset 0 0 0 2px rgba(201, 162, 75, 0.55);
+}
+
+/* Cara trasera = papel (visible cuando la solapa está desplegada) */
+.flap-face.back {
+  background:
+    repeating-linear-gradient(45deg, rgba(0,0,0,0.03) 0 6px, transparent 6px 12px),
+    var(--parchment-dark);
+  box-shadow: inset 0 0 0 2px rgba(122, 92, 46, 0.4);
+}
+.flap.n .flap-face.back, .flap.s .flap-face.back { transform: rotateX(180deg); }
+.flap.e .flap-face.back, .flap.w .flap-face.back { transform: rotateY(180deg); }
+
+/* Reverso de toda la carta (al dar vuelta) */
+.purse-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  overflow: hidden;
   transform: rotateY(180deg);
   backface-visibility: hidden;
-  box-shadow:
-    0 18px 40px var(--shadow),
-    inset 0 0 0 2px var(--gold);
-  z-index: 200;
+  box-shadow: 0 14px 30px var(--shadow), inset 0 0 0 2px var(--gold);
+  z-index: 30;
 }
+.purse-back img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.card-back img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-/* Cada capa de la carta */
-.layer {
-  position: absolute;
-  inset: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--parchment);
-  box-shadow:
-    0 18px 40px var(--shadow),
-    inset 0 0 0 2px var(--gold),
-    inset 0 0 0 10px rgba(201, 162, 75, 0.25);
-  transform-origin: left center;
-  transition: transform 0.85s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.5s ease;
-  backface-visibility: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Marco ornamental interior */
-.layer::after {
-  content: "";
-  position: absolute;
-  inset: 16px;
-  border: 1px solid rgba(58, 42, 24, 0.35);
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.layer img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.layer-caption {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 10px 14px;
-  background: linear-gradient(to top, rgba(28, 20, 16, 0.78), transparent);
-  color: var(--parchment);
-  font-style: italic;
-  font-size: 1.05rem;
-  text-align: center;
-}
-
-/* Estados: una capa está cerrada (tapando) o abierta (girada) */
-.layer.is-open {
-  transform: rotateY(-168deg);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
-}
-
-/* La capa visible actual al frente */
-.layer.is-current { z-index: 50; }
+/* Carta dada vuelta */
+.purse.flipped { transform: rotateY(180deg); }
+.purse.flipped .flap,
+.purse.flipped .base { opacity: 0; transition: opacity 0.2s ease 0.35s; }
 
 .hint {
   position: absolute;
-  bottom: -34px;
+  bottom: -6px;
   left: 0;
   right: 0;
   text-align: center;
@@ -168,13 +153,9 @@ body {
   animation: pulse 2.4s ease-in-out infinite;
   pointer-events: none;
 }
-
 .hint.hidden { display: none; }
 
-@keyframes pulse {
-  0%, 100% { opacity: 0.45; }
-  50% { opacity: 0.95; }
-}
+@keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.95; } }
 
 /* ---------- Controles ---------- */
 .controls {
@@ -182,7 +163,7 @@ body {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
-  margin: 48px 0 8px;
+  margin: 26px 0 8px;
 }
 
 .ctrl-btn {
@@ -197,7 +178,6 @@ body {
   transition: transform 0.12s ease, background 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
-
 .ctrl-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4); }
 .ctrl-btn:active { transform: translateY(0); }
 .ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
@@ -209,7 +189,7 @@ body {
 }
 
 /* ---------- Índice de partes ---------- */
-.parts { width: min(92vw, 760px); margin-top: 30px; text-align: center; }
+.parts { width: min(92vw, 760px); margin-top: 24px; text-align: center; }
 
 .parts-title {
   font-family: "Playfair Display", serif;
@@ -235,17 +215,13 @@ body {
   aspect-ratio: 1 / 1;
   transition: transform 0.15s ease, box-shadow 0.2s ease;
 }
-
 .part-thumb:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45); }
 .part-thumb.active { outline: 3px solid var(--gold-soft); outline-offset: 2px; }
-
 .part-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .part-thumb span {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 0; left: 0; right: 0;
   background: rgba(28, 20, 16, 0.8);
   color: var(--parchment);
   font-size: 0.8rem;
@@ -253,14 +229,10 @@ body {
 }
 
 /* ---------- Pie ---------- */
-.footer { margin-top: 32px; opacity: 0.6; font-size: 0.9rem; text-align: center; }
-.footer code {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: var(--gold-soft);
-}
+.footer { margin-top: 28px; opacity: 0.6; font-size: 0.9rem; text-align: center; }
+.footer code { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; color: var(--gold-soft); }
 
 @media (max-width: 480px) {
   .ctrl-btn { padding: 9px 12px; font-size: 0.92rem; }
+  .purse { width: 50%; }
 }

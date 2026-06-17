@@ -1,29 +1,35 @@
 # Carta Victoriana Interactiva
 
-Página web estática e interactiva de una **carta victoriana** que se va abriendo
-por capas. Cada clic abre una capa con un dibujo, con un **sonido suave de hoja**.
-Incluye: ver cada parte por separado, volver al inicio y deshacer el último clic.
+Página web estática e interactiva de una **carta victoriana** estilo *puzzle purse*:
+un cuadrado con **4 solapas triangulares** dobladas al centro que se van
+desplegando hacia afuera para revelar el dibujo interior, con un **sonido suave
+de hoja** en cada acción.
 
 ## Funciones
 
-- 🖱️ **Clic para abrir** la carta capa por capa (también botón "Abrir capa" o flecha →).
-- 🍃 **Sonido suave de hoja** en cada clic (generado en el navegador, sin archivos de audio). Se puede silenciar.
-- 🗂️ **Ver cada parte por separado** desde el índice inferior de miniaturas.
-- ⌂ **Volver al inicio** (botón Inicio o tecla Home).
-- ↩ **Deshacer** el último clic (botón Deshacer o flecha ←).
+- 🖱️ **Clic para desplegar** las solapas una a una (también botón "Desplegar solapa" o flecha →). También puedes clicar directamente una solapa para abrirla o cerrarla.
+- 🍃 **Sonido suave de hoja** en cada acción (generado en el navegador, sin archivos de audio). Se puede silenciar.
+- 🗂️ **Ver cada parte por separado** desde el índice de miniaturas (abre solo esa solapa; o "Interior" para abrirlas todas).
+- ⌂ **Volver al inicio** / cerrar todo (botón Inicio o tecla Home).
+- ↩ **Deshacer** la última acción (botón Deshacer o flecha ←).
 - ⟲ **Dar vuelta la carta** para ver el reverso (botón "Dar vuelta" o tecla F).
-  Reemplaza `images/reverso.svg` por tu imagen del reverso.
 
 ## Cómo poner TUS imágenes
 
-1. Entra en la carpeta `images/`.
-2. Reemplaza los archivos de ejemplo por tus dibujos. Puedes usar **JPG, PNG, WEBP o SVG**.
-   - Opción fácil: nombra tus archivos igual (`portada`, `parte-1`, …) y listo.
-   - Si cambias la extensión (ej. `.jpg`), edita las rutas en `script.js`
-     (arreglo `PARTES`, campo `img`).
-3. La **primera** entrada del arreglo `PARTES` es la portada (carta cerrada).
-4. Para añadir o quitar capas, agrega o borra entradas en `PARTES` dentro de `script.js`.
-   También puedes cambiar el `titulo` (índice) y la `leyenda` (texto sobre la imagen).
+Las imágenes están en `images/`. Puedes usar **JPG, PNG, WEBP o SVG**.
+La forma fácil: reemplaza cada archivo manteniendo el mismo nombre.
+
+| Archivo | Qué es |
+| --- | --- |
+| `centro.svg`   | Dibujo del **interior** (se revela al abrir las solapas) |
+| `solapa-n.svg` | Cara visible de la solapa **Norte** (arriba) |
+| `solapa-e.svg` | Cara visible de la solapa **Este** (derecha) |
+| `solapa-s.svg` | Cara visible de la solapa **Sur** (abajo) |
+| `solapa-w.svg` | Cara visible de la solapa **Oeste** (izquierda) |
+| `reverso.svg`  | **Reverso** de la carta (al "dar vuelta") |
+
+Si cambias la extensión (ej. `.jpg`) o los nombres, edita las rutas en el objeto
+`CONFIG` al inicio de `script.js`.
 
 ## Probar en tu PC
 
