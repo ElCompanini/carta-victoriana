@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carta Victoriana Interactiva</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital@0;1&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="title">Carta Victoriana</h1>
+    <p class="subtitle">Haz clic para ir abriendo la carta &mdash; cada capa revela un dibujo</p>
+  </header>
+
+  <!-- Escenario de la carta -->
+  <main id="stage" class="stage" role="button" tabindex="0" aria-label="Abrir la carta">
+    <div id="card" class="card">
+      <!-- Las capas se generan dinámicamente desde script.js -->
+    </div>
+    <p class="hint" id="hint">✦ Haz clic en la carta para abrirla ✦</p>
+  </main>
+
+  <!-- Controles -->
+  <nav class="controls" aria-label="Controles de la carta">
+    <button id="btn-undo" class="ctrl-btn" title="Deshacer el último clic">↩ Deshacer</button>
+    <button id="btn-home" class="ctrl-btn" title="Volver al inicio">⌂ Inicio</button>
+    <button id="btn-flip" class="ctrl-btn" title="Dar vuelta la carta (ver el reverso)">⟲ Dar vuelta</button>
+    <button id="btn-open" class="ctrl-btn ctrl-primary" title="Abrir la siguiente capa">Abrir capa ➜</button>
+    <button id="btn-sound" class="ctrl-btn" title="Activar o silenciar el sonido" aria-pressed="true">🔊 Sonido</button>
+  </nav>
+
+  <!-- Índice de partes (cada parte se puede ver por separado) -->
+  <section class="parts" aria-label="Partes de la carta">
+    <h2 class="parts-title">Ver cada parte por separado</h2>
+    <div id="parts-list" class="parts-list"></div>
+  </section>
+
+  <footer class="footer">
+    <p>Reemplaza las imágenes de la carpeta <code>/images</code> por tus propios dibujos.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

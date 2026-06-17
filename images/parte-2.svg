@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <rect width="600" height="600" fill="#dcc8a0"/>
+  <rect x="30" y="30" width="540" height="540" fill="none" stroke="#c9a24b" stroke-width="2"/>
+  <g fill="none" stroke="#7a5c2e" stroke-width="3">
+    <path d="M180 380 Q300 120 420 380"/>
+    <path d="M220 380 Q300 200 380 380"/>
+    <circle cx="300" cy="380" r="8" fill="#7a5c2e"/>
+  </g>
+  <text x="300" y="290" font-family="Georgia, serif" font-size="40" fill="#3a2a18" text-anchor="middle" font-style="italic">II</text>
+  <text x="300" y="460" font-family="Georgia, serif" font-size="26" fill="#7a5c2e" text-anchor="middle">Capa II — tu dibujo aquí</text>
+  <text x="300" y="560" font-family="Georgia, serif" font-size="16" fill="#a98c55" text-anchor="middle">Reemplaza: images/parte-2.svg</text>
+</svg>
